@@ -1,124 +1,133 @@
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include <climits>
-#include <unordered_map>
-
+#include <bits/stdc++.h>
 using namespace std;
 
-// Step 1: Define the 3D distance matrix with the shortest route distances for each city pair
 const int INF = INT_MAX;
-const int CITIES = 4;
-const int ROUTES = 5;
-int distances[CITIES][CITIES][ROUTES] = {
-    {// Islamabad
-     {0, 0, 0, 0, 0},
-     {300, 300, 300, 300, 300},
-     {250, 250, 250, 250, 250},
-     {500, 500, 500, 500, 500}},
-    {// Lahore
-     {300, 300, 300, 300, 300},
-     {20, 38, 51, 11, 8},
-     {89, 92, 101, 42, 39},
-     {150, 172, 158, 111, 62}},
-    {// Gujranwala
-     {250, 250, 250, 250, 250},
-     {89, 92, 101, 42, 39},
-     {11, 15, 9, 2, 4},
-     {69, 71, 77, 89, 85}},
-    {// Karachi
-     {500, 500, 500, 500, 500},
-     {150, 172, 158, 111, 62},
-     {69, 71, 77, 89, 85},
-     {22, 28, 59, 51, 72}}};
+const int MAX_CITIES = 4;
 
-// Step 2: Compute the minimum distance matrix
-int min_distances[CITIES][CITIES];
+vector<string> cities = {"Islamabad", "Lahore", "Gujranwala", "Karachi"};
 
-// Initialize the minimum distances
-void initializeMinDistances()
+int dist[MAX_CITIES][MAX_CITIES][5] = {
+    {{0, 0, 0, 0, 0}, {300, 300, 300, 300, 300}, {250, 250, 250, 250, 250}, {500, 500, 500, 500, 500}}, // Islamabad
+    {{300, 300, 300, 300, 300}, {20, 38, 51, 11, 8}, {89, 92, 101, 42, 39}, {150, 172, 158, 111, 62}},  // Lahore
+    {{250, 250, 250, 250, 250}, {89, 92, 101, 42, 39}, {11, 15, 9, 2, 4}, {69, 71, 77, 89, 85}},        // Gujranwala
+    {{500, 500, 500, 500, 500}, {150, 172, 158, 111, 62}, {69, 71, 77, 89, 85}, {22, 28, 59, 51, 72}}   // Karachi
+};
+
+// Function to find the minimum distance using dynamic programming (TSP)
+int tsp(int mask, int pos, vector<vector<int>> &dp, vector<vector<int>> &path)
 {
-    for (int i = 0; i < CITIES; ++i)
+    if (mask == (1 << MAX_CITIES) - 1)
     {
-        for (int j = 0; j < CITIES; ++j)
+        return dist[pos][0][0];
+    }
+
+    if (dp[mask][pos] != -1)
+    {
+        return dp[mask][pos];
+    }
+
+    int ans = INF;
+    int best_city = -1;
+    for (int city = 0; city < MAX_CITIES; city++)
+    {
+        if (!(mask & (1 << city)))
         {
-            int min_dist = INF;
-            for (int k = 0; k < ROUTES; ++k)
+            int new_mask = mask | (1 << city);
+            int new_dist = dist[pos][city][0];
+            int potential = new_dist + tsp(new_mask, city, dp, path);
+            if (potential < ans)
             {
-                min_dist = min(min_dist, distances[i][j][k]);
+                ans = potential;
+                best_city = city;
             }
-            min_distances[i][j] = min_dist;
-        }
-    }
-}
-
-// Step 3: Solve TSP with bitmasking and memoization
-unordered_map<int, unordered_map<int, int>> memo;
-
-int tsp(int pos, int visited, const vector<int> &cities)
-{
-    if (visited == (1 << cities.size()) - 1)
-    {
-        return min_distances[pos][0]; // Return to the starting city (Islamabad)
-    }
-
-    if (memo[pos].count(visited))
-        return memo[pos][visited];
-
-    int min_cost = INF;
-    for (int i = 0; i < cities.size(); ++i)
-    {
-        if (!(visited & (1 << i)))
-        {
-            int next_city = cities[i];
-            int cost = min_distances[pos][next_city] + tsp(next_city, visited | (1 << i), cities);
-            min_cost = min(min_cost, cost);
         }
     }
 
-    return memo[pos][visited] = min_cost;
+    path[mask][pos] = best_city;
+    return dp[mask][pos] = ans;
 }
 
-// Step 4: Find and print the optimal route
-void findOptimalRoute(string start_city, vector<string> cities_to_visit)
+void print_path(int mask, int pos, vector<vector<int>> &path)
 {
-    // Map city names to indices
-    unordered_map<string, int> city_indices = {
-        {"Islamabad", 0},
-        {"Lahore", 1},
-        {"Gujranwala", 2},
-        {"Karachi", 3}};
-
-    int start = city_indices[start_city];
-    vector<int> cities;
-    for (const auto &city : cities_to_visit)
+    cout << cities[pos];
+    mask |= (1 << pos);
+    while (true)
     {
-        cities.push_back(city_indices[city]);
+        int next_city = path[mask][pos];
+        if (next_city == -1)
+            break;
+        cout << " -> " << cities[next_city];
+        mask |= (1 << next_city);
+        pos = next_city;
     }
-
-    // Initialize minimum distances and memoization table
-    initializeMinDistances();
-    memo.clear();
-
-    // Compute the minimum distance using TSP
-    int min_distance = tsp(start, 1 << start, cities);
-
-    // Display the results
-    cout << "Optimal Route: " << start_city;
-    for (const auto &city : cities_to_visit)
-    {
-        cout << " -> " << city;
-    }
-    cout << " -> " << start_city << endl;
-    cout << "Minimum Distance: " << min_distance << " km" << endl;
-    cout << "Thank you for using the City Route Planner. Safe travels!" << endl;
+    cout << endl;
 }
 
 int main()
 {
-    // Example usage
-    string start_city = "Islamabad";
-    vector<string> cities_to_visit = {"Lahore", "Gujranwala"};
-    findOptimalRoute(start_city, cities_to_visit);
+    for (int i = 0; i < cities.size(); i++)
+    {
+        cout << cities[i] << " , ";
+    }
+    cout << endl;
+    string start_city;
+    cout << "Please enter the starting city: ";
+    cin >> start_city;
+
+    int start_index = -1;
+    for (int i = 0; i < cities.size(); i++)
+    {
+        if (cities[i] == start_city)
+        {
+            start_index = i;
+            break;
+        }
+    }
+
+    if (start_index == -1)
+    {
+        cout << "Invalid city name. Exiting." << endl;
+        return 0;
+    }
+
+    vector<string> visit_cities;
+    cout << "Enter the list of cities you wish to visit ( Lahore, Gujranwala, Karachi): ";
+    string input;
+    cin.ignore();
+    getline(cin, input);
+    stringstream ss(input);
+    string city;
+    while (getline(ss, city, ','))
+    {
+        visit_cities.push_back(city);
+    }
+
+    vector<int> cities_to_visit;
+    for (const string &city : visit_cities)
+    {
+        int city_index = -1;
+        for (int i = 0; i < cities.size(); i++)
+        {
+            if (cities[i] == city)
+            {
+                city_index = i;
+                break;
+            }
+        }
+        if (city_index != -1)
+        {
+            cities_to_visit.push_back(city_index);
+        }
+    }
+
+    vector<vector<int>> dp(1 << MAX_CITIES, vector<int>(MAX_CITIES, -1));
+    vector<vector<int>> path(1 << MAX_CITIES, vector<int>(MAX_CITIES, -1));
+
+    int min_dist = tsp(1 << start_index, start_index, dp, path);
+
+    cout << "Optimal Route: ";
+    print_path(1 << start_index, start_index, path);
+    cout << "Minimum Distance: " << min_dist << " km" << endl;
+
     return 0;
 }
