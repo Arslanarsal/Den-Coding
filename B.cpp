@@ -1,28 +1,39 @@
-#include <bits/stdc++.h>
-#include <ext/pb_ds/assoc_container.hpp>
-#include <ext/pb_ds/tree_policy.hpp>
-
+#include <iostream>
 using namespace std;
-using namespace __gnu_pbds;
-#define fastio                        \
-    ios_base::sync_with_stdio(false); \
-    cin.tie(NULL);                    \
-    cout.tie(NULL);
-typedef tree<int, null_type, less<int>, rb_tree_tag, tree_order_statistics_node_update> oSet; // [find_by_order ==> given address at index] |==| [order_of_key ==> Number of element smaller then X]y
-#define int long long
-#define ld long double
-const int mod = 1e9 + 7;
-int t, n, m, q, x;
 
-int32_t main()
+int main()
 {
-   fastio;
-    t = 1;
-    // cin >> t;
-    while (t--)
+    int rows = 21, columns = 20;
+    int m = 0;
+    for (int i = 0; i < rows; i++)
     {
-        cin >> n;
-        
+        for (int j = 0; j < columns; j++)
+        {
+            if (i < 3 || j < 3 || i >= 18 || j >= 17)
+            {
+                cout << "* ";
+            }
+
+            else if (i > 10 && j <= 16 && j >= (8 + m) && j <= (10 + m))
+            {
+                cout << "  ";
+            }
+
+            else if (j == 3 || j == 4 || i == 3 || i == 4 || i == 9 || i == 10 || ((i <= 10 && j == 16) || (i <= 10 && j == 15)))
+            {
+                cout << "  ";
+            }
+            else
+            {
+                cout << "* ";
+            }
+        }
+        if (i > 10)
+        {
+            m++;
+        }
+
+        cout << endl;
     }
 
     return 0;
